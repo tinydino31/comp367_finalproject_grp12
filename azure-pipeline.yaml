@@ -1,0 +1,64 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  jobs:
+  - job: BuildJob
+    steps:
+    - task: Maven@3
+      inputs:
+        mavenPomFile: 'pom.xml'
+        goals: 'compile'
+        publishJUnitResults: false
+      displayName: 'Step 1 - Compile Project'
+
+    - task: Maven@3
+      inputs:
+        mavenPomFile: 'pom.xml'
+        goals: 'test'
+        publishJUnitResults: true
+        testResultsFiles: '**/surefire-reports/TEST-*.xml'
+        codeCoverageToolOption: 'JaCoCo'
+      displayName: 'Step 2 - Run Tests and Code Coverage'
+
+- stage: Deliver
+  jobs:
+  - job: DeliverJob
+    steps:
+    - task: Maven@3
+      inputs:
+        mavenPomFile: 'pom.xml'
+        goals: 'package'
+      displayName: 'Package Artifact'
+
+- stage: DeployDev
+  jobs:
+  - job: DeployDevJob
+    steps:
+    - script: echo "Deploying to Dev Environment"
+      displayName: 'Deploy to Dev'
+
+- stage: DeployQAT
+  jobs:
+  - job: DeployQATJob
+    steps:
+    - script: echo "Deploying to QAT Environment"
+      displayName: 'Deploy to QAT'
+
+- stage: DeployStaging
+  jobs:
+  - job: DeployStagingJob
+    steps:
+    - script: echo "Deploying to Staging Environment"
+      displayName: 'Deploy to Staging'
+
+- stage: DeployProduction
+  jobs:
+  - job: DeployProductionJob
+    steps:
+    - script: echo "Deploying to Production Environment"
+      displayName: 'Deploy to Production'
