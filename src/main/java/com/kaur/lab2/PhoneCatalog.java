@@ -7,7 +7,7 @@ package com.kaur.lab2;
 public class PhoneCatalog {
 
     Products product;
-
+    // Feature: Constructor dependency injection via XML configuration
     // dependency injection through constructor
     public PhoneCatalog(Products product) {
         this.product = product;
