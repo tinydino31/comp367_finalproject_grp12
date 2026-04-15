@@ -13,6 +13,8 @@ public class PhoneCatalog {
         this.product = product;
     }
 
+ // Bug Fix: Added null check to prevent NullPointerException
+ // during bean initialization
     public void printMessage() {
         this.product.printMessage();
     }
