@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- Constructor injection: PhoneCatalog depends on Products -->
+    <bean id="phoneCatalog" class="com.kaur.lab2.PhoneCatalog">
+        <constructor-arg>
+            <ref bean="smartPhones" />
+        </constructor-arg>
+    </bean>
+
+    <bean id="smartPhones" class="com.kaur.lab2.SmartPhones" />
+
+</beans>
