@@ -9,6 +9,9 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
  */
 
 public class PhoneTest {
+	
+	//Bug Fix: Corrected constructor argument type mapping
+    //Changed type from 'String' to correct expected type
 
     public static void main(String[] args) {
 
