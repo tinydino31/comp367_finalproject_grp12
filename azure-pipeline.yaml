@@ -14,7 +14,7 @@ stages:
   - job: BuildJob
     steps:
 
-    # IMPORTANT: Fix shallow clone (prevents Sonar SCM warnings)
+    # FIX: full git history for Sonar (prevents SCM + branch issues)
     - checkout: self
       fetchDepth: 0
 
@@ -26,6 +26,7 @@ stages:
         organization: 'tinydino31'
         scannerMode: 'Other'
         extraProperties: |
+          sonar.projectKey=com.kaur.lab2:Week2_Lab2_301435549_JashanjotKaur
           sonar.qualitygate.wait=true
 
     # STEP 2 - Compile Project
@@ -36,7 +37,7 @@ stages:
         goals: 'compile'
         publishJUnitResults: false
 
-    # STEP 3 - Test + Sonar Analysis
+    # STEP 3 - Test + Analysis
     - task: Maven@3
       displayName: 'Run Tests + Sonar Analysis'
       inputs:
@@ -46,20 +47,20 @@ stages:
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
         codeCoverageToolOption: 'JaCoCo'
 
-    # STEP 4 - Publish Sonar Results (Quality Gate)
+    # STEP 4 - Publish Quality Gate
     - task: SonarCloudPublish@4
       displayName: 'Publish SonarCloud Quality Gate'
       inputs:
         pollingTimeoutSec: '300'
 
-    # STEP 5 - Publish Test Results
+    # STEP 5 - Test Results
     - task: PublishTestResults@2
       displayName: 'Publish Test Results'
       inputs:
         testResultsFormat: 'JUnit'
         testResultsFiles: '**/target/surefire-reports/*.xml'
 
-    # STEP 6 - Publish Code Coverage
+    # STEP 6 - Coverage
     - task: PublishCodeCoverageResults@2
       displayName: 'Publish Code Coverage'
       inputs:
