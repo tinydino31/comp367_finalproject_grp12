@@ -14,38 +14,41 @@ stages:
   - job: BuildJob
     steps:
 
+    # IMPORTANT: Fix shallow clone (prevents Sonar SCM warnings)
+    - checkout: self
+      fetchDepth: 0
+
     # STEP 1 - SonarCloud Prepare
     - task: SonarCloudPrepare@4
-      displayName: 'Prepare SonarQube Analysis'
+      displayName: 'Prepare SonarCloud Analysis'
       inputs:
         SonarCloud: 'sonarqubecloud'
         organization: 'tinydino31'
         scannerMode: 'Other'
         extraProperties: |
-          sonar.branch.name=main
+          sonar.qualitygate.wait=true
 
     # STEP 2 - Compile Project
     - task: Maven@3
-      displayName: 'Step 1 - Compile Project'
+      displayName: 'Compile Project'
       inputs:
         mavenPomFile: 'pom.xml'
         goals: 'compile'
         publishJUnitResults: false
 
-    # STEP 3 - Run Tests and Code Coverage + Sonar
+    # STEP 3 - Test + Sonar Analysis
     - task: Maven@3
-      displayName: 'Step 2 - Run Tests and Code Coverage'
+      displayName: 'Run Tests + Sonar Analysis'
       inputs:
         mavenPomFile: 'pom.xml'
         goals: 'clean verify sonar:sonar'
         publishJUnitResults: true
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
         codeCoverageToolOption: 'JaCoCo'
-        sonarQubeRunAnalysis: true
 
-    # STEP 4 - Publish SonarCloud Results
+    # STEP 4 - Publish Sonar Results (Quality Gate)
     - task: SonarCloudPublish@4
-      displayName: 'Publish SonarQube Results'
+      displayName: 'Publish SonarCloud Quality Gate'
       inputs:
         pollingTimeoutSec: '300'
 
@@ -67,6 +70,7 @@ stages:
 # DELIVER STAGE
 # =========================
 - stage: Deliver
+  dependsOn: Build
   jobs:
   - job: DeliverJob
     steps:
@@ -81,6 +85,7 @@ stages:
 # =========================
 
 - stage: DeployDev
+  dependsOn: Deliver
   jobs:
   - job: DeployDevJob
     steps:
@@ -88,6 +93,7 @@ stages:
       displayName: 'Deploy to Dev'
 
 - stage: DeployQAT
+  dependsOn: DeployDev
   jobs:
   - job: DeployQATJob
     steps:
@@ -95,6 +101,7 @@ stages:
       displayName: 'Deploy to QAT'
 
 - stage: DeployStaging
+  dependsOn: DeployQAT
   jobs:
   - job: DeployStagingJob
     steps:
@@ -102,6 +109,7 @@ stages:
       displayName: 'Deploy to Staging'
 
 - stage: DeployProduction
+  dependsOn: DeployStaging
   jobs:
   - job: DeployProductionJob
     steps:
