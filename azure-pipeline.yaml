@@ -14,7 +14,7 @@ stages:
   - job: BuildAndAnalyze
     steps:
 
-    # Checkout full history (required for Sonar)
+    # Full repo history (required for Sonar)
     - checkout: self
       fetchDepth: 0
 
@@ -24,15 +24,15 @@ stages:
     - task: SonarCloudPrepare@4
       displayName: 'Prepare SonarCloud Analysis'
       inputs:
-        SonarCloud: 'sonarqubecloud'   # Service connection name
+        SonarCloud: 'sonarqubecloud'   # MUST match your service connection name
         organization: 'tinydino31'
         scannerMode: 'Other'
-        projectKey: 'com.kaur.lab2:Week2_Lab2_301435549_JashanjotKaur'
-        projectName: 'Week2_Lab2_301435549_JashanjotKaur'
+        projectKey: 'tinydino31_comp367_finalproject_grp12'
+        projectName: 'comp367_finalproject_grp12'
         extraProperties: |
           sonar.host.url=https://sonarcloud.io
           sonar.organization=tinydino31
-          sonar.projectKey=com.kaur.lab2:Week2_Lab2_301435549_JashanjotKaur
+          sonar.projectKey=tinydino31_comp367_finalproject_grp12
           sonar.qualitygate.wait=true
 
     # =========================
@@ -48,7 +48,7 @@ stages:
         codeCoverageToolOption: 'JaCoCo'
 
     # =========================
-    # PUBLISH QUALITY GATE
+    # QUALITY GATE
     # =========================
     - task: SonarCloudPublish@4
       displayName: 'Publish Quality Gate Result'
