@@ -7,14 +7,14 @@ pool:
 stages:
 
 # =========================
-# BUILD + SONAR STAGE
+# BUILD + SONARCLOUD
 # =========================
 - stage: Build
   jobs:
   - job: BuildAndAnalyze
     steps:
 
-    # FIX: Required for proper Sonar SCM analysis
+    # REQUIRED: full git history for Sonar SCM analysis
     - checkout: self
       fetchDepth: 0
 
@@ -33,7 +33,7 @@ stages:
           sonar.qualitygate.wait=true
 
     # =========================
-    # BUILD + TEST (NO sonar:sonar HERE)
+    # BUILD + TEST (NO sonar:sonar)
     # =========================
     - task: Maven@3
       displayName: 'Build and Test'
@@ -45,16 +45,16 @@ stages:
         codeCoverageToolOption: 'JaCoCo'
 
     # =========================
-    # SONAR ANALYSIS
+    # SONARCLOUD ANALYSIS
     # =========================
     - task: SonarCloudAnalyze@4
       displayName: 'Run SonarCloud Analysis'
 
     # =========================
-    # QUALITY GATE
+    # QUALITY GATE CHECK
     # =========================
     - task: SonarCloudPublish@4
-      displayName: 'Publish Quality Gate'
+      displayName: 'Publish Quality Gate Result'
       inputs:
         pollingTimeoutSec: '300'
 
@@ -101,7 +101,7 @@ stages:
   jobs:
   - job: DevJob
     steps:
-    - script: echo "Deploying to Dev"
+    - script: echo "Deploying to Dev Environment"
       displayName: 'Deploy Dev'
 
 - stage: DeployQAT
@@ -109,7 +109,7 @@ stages:
   jobs:
   - job: QATJob
     steps:
-    - script: echo "Deploying to QAT"
+    - script: echo "Deploying to QAT Environment"
       displayName: 'Deploy QAT'
 
 - stage: DeployStaging
@@ -117,7 +117,7 @@ stages:
   jobs:
   - job: StagingJob
     steps:
-    - script: echo "Deploying to Staging"
+    - script: echo "Deploying to Staging Environment"
       displayName: 'Deploy Staging'
 
 - stage: DeployProduction
@@ -125,5 +125,5 @@ stages:
   jobs:
   - job: ProdJob
     steps:
-    - script: echo "Deploying to Production"
+    - script: echo "Deploying to Production Environment"
       displayName: 'Deploy Production'
