@@ -1,5 +1,5 @@
 trigger:
-- main
+  - main
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -14,15 +14,15 @@ stages:
   - job: BuildJob
     steps:
 
-    # STEP 1 - SonarQube Prepare
+    # STEP 1 - SonarCloud Prepare
     - task: SonarCloudPrepare@4
       displayName: 'Prepare SonarQube Analysis'
       inputs:
-        SonarCloud: 'sonarqubecloud'        
-        organization: 'tinydino31'       
+        SonarCloud: 'sonarqubecloud'
+        organization: 'tinydino31'
         scannerMode: 'Other'
-            extraProperties: |
-      sonar.branch.name=main
+        extraProperties: |
+          sonar.branch.name=main
 
     # STEP 2 - Compile Project
     - task: Maven@3
@@ -32,18 +32,18 @@ stages:
         goals: 'compile'
         publishJUnitResults: false
 
-    # STEP 3 - Run Tests and Code Coverage
+    # STEP 3 - Run Tests and Code Coverage + Sonar
     - task: Maven@3
       displayName: 'Step 2 - Run Tests and Code Coverage'
       inputs:
         mavenPomFile: 'pom.xml'
-        goals: 'clean verify sonar:sonar'  
+        goals: 'clean verify sonar:sonar'
         publishJUnitResults: true
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
         codeCoverageToolOption: 'JaCoCo'
-        sonarQubeRunAnalysis: true        
+        sonarQubeRunAnalysis: true
 
-    # STEP 4 - Publish SonarQube Results
+    # STEP 4 - Publish SonarCloud Results
     - task: SonarCloudPublish@4
       displayName: 'Publish SonarQube Results'
       inputs:
@@ -77,8 +77,9 @@ stages:
         goals: 'package'
 
 # =========================
-# DEPLOY STAGES (mocked - rubric allows this)
+# DEPLOY STAGES (Mocked)
 # =========================
+
 - stage: DeployDev
   jobs:
   - job: DeployDevJob
