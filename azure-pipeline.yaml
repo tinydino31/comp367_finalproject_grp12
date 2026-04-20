@@ -7,65 +7,75 @@ pool:
 stages:
 
 # =========================
-# BUILD STAGE
+# BUILD + SONAR STAGE
 # =========================
 - stage: Build
   jobs:
-  - job: BuildJob
+  - job: BuildAndAnalyze
     steps:
 
-    # FIX: full git history for Sonar (prevents SCM + branch issues)
+    # IMPORTANT: Full git history for Sonar SCM analysis
     - checkout: self
       fetchDepth: 0
 
-    # STEP 1 - SonarCloud Prepare
+    # =========================
+    # 1. SONARCLOUD PREPARE
+    # =========================
     - task: SonarCloudPrepare@4
       displayName: 'Prepare SonarCloud Analysis'
       inputs:
         SonarCloud: 'sonarqubecloud'
         organization: 'tinydino31'
-        scannerMode: 'Other'
+        scannerMode: 'Maven'
+        projectKey: 'com.kaur.lab2:Week2_Lab2_301435549_JashanjotKaur'
+        projectName: 'Week2 Lab2 Kaur Project'
         extraProperties: |
-          sonar.projectKey=com.kaur.lab2:Week2_Lab2_301435549_JashanjotKaur
           sonar.qualitygate.wait=true
 
-    # STEP 2 - Compile Project
+    # =========================
+    # 2. BUILD + TEST (NO sonar:sonar here)
+    # =========================
     - task: Maven@3
-      displayName: 'Compile Project'
+      displayName: 'Build & Test'
       inputs:
         mavenPomFile: 'pom.xml'
-        goals: 'compile'
-        publishJUnitResults: false
-
-    # STEP 3 - Test + Analysis
-    - task: Maven@3
-      displayName: 'Run Tests + Sonar Analysis'
-      inputs:
-        mavenPomFile: 'pom.xml'
-        goals: 'clean verify sonar:sonar'
+        goals: 'clean verify'
         publishJUnitResults: true
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
         codeCoverageToolOption: 'JaCoCo'
 
-    # STEP 4 - Publish Quality Gate
+    # =========================
+    # 3. RUN SONAR ANALYSIS (AZURE CONTROLLED)
+    # =========================
+    - task: SonarCloudAnalyze@4
+      displayName: 'Run SonarCloud Analysis'
+
+    # =========================
+    # 4. QUALITY GATE CHECK
+    # =========================
     - task: SonarCloudPublish@4
       displayName: 'Publish SonarCloud Quality Gate'
       inputs:
         pollingTimeoutSec: '300'
 
-    # STEP 5 - Test Results
+    # =========================
+    # 5. TEST RESULTS
+    # =========================
     - task: PublishTestResults@2
       displayName: 'Publish Test Results'
       inputs:
         testResultsFormat: 'JUnit'
-        testResultsFiles: '**/target/surefire-reports/*.xml'
+        testResultsFiles: '**/surefire-reports/TEST-*.xml'
 
-    # STEP 6 - Coverage
+    # =========================
+    # 6. CODE COVERAGE
+    # =========================
     - task: PublishCodeCoverageResults@2
       displayName: 'Publish Code Coverage'
       inputs:
         summaryFileLocation: 'target/site/jacoco/jacoco.xml'
         pathToSources: 'src/main/java'
+
 
 # =========================
 # DELIVER STAGE
@@ -73,46 +83,47 @@ stages:
 - stage: Deliver
   dependsOn: Build
   jobs:
-  - job: DeliverJob
+  - job: Package
     steps:
     - task: Maven@3
-      displayName: 'Package Artifact'
+      displayName: 'Package Application'
       inputs:
         mavenPomFile: 'pom.xml'
         goals: 'package'
 
+
 # =========================
-# DEPLOY STAGES (Mocked)
+# DEPLOY STAGES (MOCK)
 # =========================
 
 - stage: DeployDev
   dependsOn: Deliver
   jobs:
-  - job: DeployDevJob
+  - job: DevDeploy
     steps:
-    - script: echo "Deploying to Dev Environment"
-      displayName: 'Deploy to Dev'
+    - script: echo "Deploying to Dev"
+      displayName: 'Deploy Dev'
 
 - stage: DeployQAT
   dependsOn: DeployDev
   jobs:
-  - job: DeployQATJob
+  - job: QATDeploy
     steps:
-    - script: echo "Deploying to QAT Environment"
-      displayName: 'Deploy to QAT'
+    - script: echo "Deploying to QAT"
+      displayName: 'Deploy QAT'
 
 - stage: DeployStaging
   dependsOn: DeployQAT
   jobs:
-  - job: DeployStagingJob
+  - job: StagingDeploy
     steps:
-    - script: echo "Deploying to Staging Environment"
-      displayName: 'Deploy to Staging'
+    - script: echo "Deploying to Staging"
+      displayName: 'Deploy Staging'
 
 - stage: DeployProduction
   dependsOn: DeployStaging
   jobs:
-  - job: DeployProductionJob
+  - job: ProdDeploy
     steps:
-    - script: echo "Deploying to Production Environment"
-      displayName: 'Deploy to Production'
+    - script: echo "Deploying to Production"
+      displayName: 'Deploy Production'
