@@ -21,6 +21,8 @@ stages:
         SonarCloud: 'sonarqubecloud'        
         organization: 'tinydino31'       
         scannerMode: 'Other'
+            extraProperties: |
+      sonar.branch.name=main
 
     # STEP 2 - Compile Project
     - task: Maven@3
