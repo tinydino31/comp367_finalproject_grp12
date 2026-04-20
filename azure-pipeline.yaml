@@ -14,7 +14,7 @@ stages:
   - job: BuildAndAnalyze
     steps:
 
-    # REQUIRED: full git history for Sonar SCM analysis
+    # Checkout full history (required for Sonar)
     - checkout: self
       fetchDepth: 0
 
@@ -24,34 +24,31 @@ stages:
     - task: SonarCloudPrepare@4
       displayName: 'Prepare SonarCloud Analysis'
       inputs:
-        SonarCloud: 'sonarqubecloud'
+        SonarCloud: 'sonarqubecloud'   # Service connection name
         organization: 'tinydino31'
-        scannerMode: 'Maven'
+        scannerMode: 'Other'
         projectKey: 'com.kaur.lab2:Week2_Lab2_301435549_JashanjotKaur'
         projectName: 'Week2_Lab2_301435549_JashanjotKaur'
         extraProperties: |
+          sonar.host.url=https://sonarcloud.io
+          sonar.organization=tinydino31
+          sonar.projectKey=com.kaur.lab2:Week2_Lab2_301435549_JashanjotKaur
           sonar.qualitygate.wait=true
 
     # =========================
-    # BUILD + TEST (NO sonar:sonar)
+    # BUILD + TEST + SONAR
     # =========================
     - task: Maven@3
-      displayName: 'Build and Test'
+      displayName: 'Build, Test and Analyze'
       inputs:
         mavenPomFile: 'pom.xml'
-        goals: 'clean verify'
+        goals: 'clean verify sonar:sonar'
         publishJUnitResults: true
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
         codeCoverageToolOption: 'JaCoCo'
 
     # =========================
-    # SONARCLOUD ANALYSIS
-    # =========================
-    - task: SonarCloudAnalyze@4
-      displayName: 'Run SonarCloud Analysis'
-
-    # =========================
-    # QUALITY GATE CHECK
+    # PUBLISH QUALITY GATE
     # =========================
     - task: SonarCloudPublish@4
       displayName: 'Publish Quality Gate Result'
