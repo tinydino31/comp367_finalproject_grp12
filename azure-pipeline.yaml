@@ -24,7 +24,7 @@ stages:
     - task: SonarCloudPrepare@4
       displayName: 'Prepare SonarCloud Analysis'
       inputs:
-        SonarCloud: 'sonarqubecloud'   # MUST match your service connection name
+        SonarCloud: 'sonarqubecloud'   +
         organization: 'tinydino31'
         scannerMode: 'Other'
         projectKey: 'tinydino31_comp367_finalproject_grp12'
