@@ -19,7 +19,7 @@ stages:
       displayName: 'Prepare SonarQube Analysis'
       inputs:
         SonarCloud: 'sonarqubecloud'        
-        organization: 'jkau1146'       
+        organization: 'tinydino31'       
         scannerMode: 'Other'
 
     # STEP 2 - Compile Project
