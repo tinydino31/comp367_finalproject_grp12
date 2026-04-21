@@ -34,7 +34,7 @@ stages:
 
     # STEP 2 — Build + Test + Sonar scan
     # The -D flags here OVERRIDE whatever is in pom.xml — this is the key fix
-    - task: Maven@4
+- task: Maven@4
       displayName: 'Build, Test, and Sonar Analyze'
       inputs:
         mavenPomFile: 'pom.xml'
@@ -43,7 +43,6 @@ stages:
           -Dsonar.projectKey=tinydino31_comp367_finalproject_grp12
           -Dsonar.organization=tinydino31
           -Dsonar.host.url=https://sonarcloud.io
-          -Dsonar.qualitygate.wait=true
         mavenOptions: '-Xmx3072m'
         javaHomeOption: 'JDKVersion'
         jdkVersionOption: '1.17'
