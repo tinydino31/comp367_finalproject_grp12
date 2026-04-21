@@ -4,123 +4,151 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
+variables:
+  artifactName: 'FinalProject'
+  javaVersion: '1.17'
+
 stages:
 
 # =========================
-# BUILD + SONARCLOUD
+# BUILD STAGE
 # =========================
 - stage: Build
+  displayName: "Build Stage"
   jobs:
   - job: BuildAndAnalyze
+    displayName: "Build, Test, and Analyze"
     steps:
 
-    # Full repo history
+    # Full repo history required by SonarCloud
     - checkout: self
       fetchDepth: 0
 
-    # =========================
-    # SONARCLOUD PREPARE
-    # =========================
+    # STEP 1 — Prepare SonarCloud
     - task: SonarCloudPrepare@4
       displayName: 'Prepare SonarCloud Analysis'
       inputs:
-        SonarCloud: 'sonarqubecloud'   +
+        SonarCloud: 'sonarqubecloud'
         organization: 'tinydino31'
-        scannerMode: 'Other'
-        projectKey: 'tinydino31_comp367_finalproject_grp12'
-        projectName: 'comp367_finalproject_grp12'
-        extraProperties: |
-          sonar.host.url=https://sonarcloud.io
-          sonar.organization=tinydino31
-          sonar.projectKey=tinydino31_comp367_finalproject_grp12
-          sonar.qualitygate.wait=true
+        scannerMode: 'Other'      # 'Other' = Maven/Gradle will invoke the scanner
 
-    # =========================
-    # BUILD + TEST + SONAR
-    # =========================
-    - task: Maven@3
-      displayName: 'Build, Test and Analyze'
+    # STEP 2 — Build + Test + Sonar scan
+    # The -D flags here OVERRIDE whatever is in pom.xml — this is the key fix
+    - task: Maven@4
+      displayName: 'Build, Test, and Sonar Analyze'
       inputs:
         mavenPomFile: 'pom.xml'
         goals: 'clean verify sonar:sonar'
+        options: >-
+          -Dsonar.projectKey=tinydino31_comp367_finalproject_grp12
+          -Dsonar.organization=tinydino31
+          -Dsonar.host.url=https://sonarcloud.io
+          -Dsonar.qualitygate.wait=true
+        mavenOptions: '-Xmx3072m'
+        javaHomeOption: 'JDKVersion'
+        jdkVersionOption: '1.17'
+        jdkArchitectureOption: 'x64'
         publishJUnitResults: true
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
         codeCoverageToolOption: 'JaCoCo'
 
-    # =========================
-    # QUALITY GATE
-    # =========================
+    # STEP 3 — Publish Quality Gate result
     - task: SonarCloudPublish@4
       displayName: 'Publish Quality Gate Result'
       inputs:
         pollingTimeoutSec: '300'
 
-    # =========================
-    # TEST RESULTS
-    # =========================
+    # Publish test results
     - task: PublishTestResults@2
       displayName: 'Publish Test Results'
       inputs:
         testResultsFormat: 'JUnit'
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
 
-    # =========================
-    # CODE COVERAGE
-    # =========================
+    # Publish code coverage
     - task: PublishCodeCoverageResults@2
       displayName: 'Publish Code Coverage'
       inputs:
         summaryFileLocation: 'target/site/jacoco/jacoco.xml'
         pathToSources: 'src/main/java'
 
+    # Copy JAR for artifact publishing
+    - task: CopyFiles@2
+      displayName: 'Copy JAR to Staging'
+      inputs:
+        SourceFolder: '$(System.DefaultWorkingDirectory)/target'
+        Contents: '**/*.jar'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+    # Publish pipeline artifact for CD stages
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish Pipeline Artifact'
+      inputs:
+        targetPath: '$(Build.ArtifactStagingDirectory)'
+        artifact: '$(artifactName)'
+
 
 # =========================
-# PACKAGE STAGE
+# DELIVER (PACKAGE) STAGE
 # =========================
 - stage: Deliver
+  displayName: "Deliver Stage"
   dependsOn: Build
+  condition: succeeded()
   jobs:
   - job: PackageJob
+    displayName: "Package and Release Artifact"
     steps:
-    - task: Maven@3
+    - task: Maven@4
       displayName: 'Package Application'
       inputs:
         mavenPomFile: 'pom.xml'
         goals: 'package'
+        options: '-DskipTests'
+        javaHomeOption: 'JDKVersion'
+        jdkVersionOption: '1.17'
 
 
 # =========================
-# DEPLOY STAGES (MOCK)
+# DEPLOY STAGES (MOCKED)
 # =========================
 
 - stage: DeployDev
+  displayName: "Deploy to Dev Environment"
   dependsOn: Deliver
+  condition: succeeded()
   jobs:
   - job: DevJob
     steps:
     - script: echo "Deploying to Dev Environment"
-      displayName: 'Deploy Dev'
+      displayName: 'Deploy to Dev'
 
 - stage: DeployQAT
+  displayName: "Deploy to QAT Environment"
   dependsOn: DeployDev
+  condition: succeeded()
   jobs:
   - job: QATJob
     steps:
     - script: echo "Deploying to QAT Environment"
-      displayName: 'Deploy QAT'
+      displayName: 'Deploy to QAT'
 
 - stage: DeployStaging
+  displayName: "Deploy to Staging Environment"
   dependsOn: DeployQAT
+  condition: succeeded()
   jobs:
   - job: StagingJob
     steps:
     - script: echo "Deploying to Staging Environment"
-      displayName: 'Deploy Staging'
+      displayName: 'Deploy to Staging'
 
 - stage: DeployProduction
+  displayName: "Deploy to Production Environment"
   dependsOn: DeployStaging
+  condition: succeeded()
   jobs:
   - job: ProdJob
     steps:
     - script: echo "Deploying to Production Environment"
-      displayName: 'Deploy Production'
+      displayName: 'Deploy to Production'
