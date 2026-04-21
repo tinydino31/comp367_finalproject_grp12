@@ -20,21 +20,17 @@ stages:
     displayName: "Build, Test, and Analyze"
     steps:
 
-    # Full repo history required by SonarCloud
     - checkout: self
       fetchDepth: 0
 
-    # STEP 1 — Prepare SonarCloud
     - task: SonarCloudPrepare@4
       displayName: 'Prepare SonarCloud Analysis'
       inputs:
         SonarCloud: 'sonarqubecloud'
         organization: 'tinydino31'
-        scannerMode: 'Other'      # 'Other' = Maven/Gradle will invoke the scanner
+        scannerMode: 'Other'
 
-    # STEP 2 — Build + Test + Sonar scan
-    # The -D flags here OVERRIDE whatever is in pom.xml — this is the key fix
-- task: Maven@4
+    - task: Maven@4
       displayName: 'Build, Test, and Sonar Analyze'
       inputs:
         mavenPomFile: 'pom.xml'
@@ -51,27 +47,23 @@ stages:
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
         codeCoverageToolOption: 'JaCoCo'
 
-    # STEP 3 — Publish Quality Gate result
     - task: SonarCloudPublish@4
       displayName: 'Publish Quality Gate Result'
       inputs:
         pollingTimeoutSec: '300'
 
-    # Publish test results
     - task: PublishTestResults@2
       displayName: 'Publish Test Results'
       inputs:
         testResultsFormat: 'JUnit'
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
 
-    # Publish code coverage
     - task: PublishCodeCoverageResults@2
       displayName: 'Publish Code Coverage'
       inputs:
         summaryFileLocation: 'target/site/jacoco/jacoco.xml'
         pathToSources: 'src/main/java'
 
-    # Copy JAR for artifact publishing
     - task: CopyFiles@2
       displayName: 'Copy JAR to Staging'
       inputs:
@@ -79,7 +71,6 @@ stages:
         Contents: '**/*.jar'
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
-    # Publish pipeline artifact for CD stages
     - task: PublishPipelineArtifact@1
       displayName: 'Publish Pipeline Artifact'
       inputs:
